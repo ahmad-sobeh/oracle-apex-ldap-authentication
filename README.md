@@ -90,34 +90,32 @@ BEGIN
 END;
 /
 
-## ⚠️ Important Notes
+```
 
-principal must be the database user executing the LDAP call
+### ⚠️ Important Notes
 
-The IP address must match the actual Active Directory server
+- `principal` must be the database user executing the LDAP call
+- The IP address must match the actual Active Directory server
+- Port `389` is used for standard LDAP (not LDAPS)
 
-Port 389 is used for standard LDAP (not LDAPS)
+---
 
-🔹 Step 2: LDAP Authentication Function
+## 🔹 Step 2: LDAP Authentication Function
 
 A PL/SQL function that authenticates users against Active Directory.
 
-Function behavior
+### Function behavior
 
-Initializes an LDAP session
+- Initializes an LDAP session
+- Uses **UPN format** (`username@domain`)
+- Attempts a simple LDAP bind
+- Returns `TRUE` if authentication succeeds
+- Returns `FALSE` on failure
+- Always unbinds the LDAP session
 
-Uses UPN format (username@domain)
+### PL/SQL Function
 
-Attempts a simple LDAP bind
-
-Returns TRUE if authentication succeeds
-
-Returns FALSE on failure
-
-Always unbinds the LDAP session
-
-PL/SQL Function
-
+```sql
 CREATE OR REPLACE FUNCTION FN_LDAP_SIMPLE_LOGIN (
     p_username IN VARCHAR2,
     p_password IN VARCHAR2
@@ -160,18 +158,25 @@ EXCEPTION
         RETURN FALSE;
 END;
 /
+```
 
-🔹 Step 3: Testing LDAP Authentication
+
+## 🔹 Step 3: Testing LDAP Authentication
 
 You can test the LDAP login manually using an anonymous PL/SQL block.
 
-This helps verify:
+Why this step is important
 
-ACL configuration
+This step helps verify:
 
-Network connectivity
+Network ACL configuration
 
-LDAP bind correctness
+Network connectivity to Active Directory
+
+Correct LDAP bind format
+
+Test block
+```sql
 
 BEGIN
     IF FN_LDAP_SIMPLE_LOGIN(
@@ -184,8 +189,9 @@ BEGIN
     END IF;
 END;
 /
+```
 
-🔹 Step 4: Using with Oracle APEX
+## 🔹 Step 4: Using with Oracle APEX
 
 After successful testing, integrate the function into Oracle APEX:
 
@@ -195,21 +201,21 @@ Call FN_LDAP_SIMPLE_LOGIN during login
 
 Map successful authentication to an APEX user
 
-This allows users to log in to APEX using their Windows / Active Directory credentials.
+This allows users to log in using their Windows / Active Directory credentials.
 
-🔹 Security Considerations
+## 🔹 Security Considerations
 
 Passwords should never be logged or stored
 
 Consider using LDAPS (port 636) in production
 
-Grant minimum required ACL privileges
+Grant the minimum required ACL privileges
 
-Restrict execution of the LDAP function
+Restrict execution access to the LDAP function
 
-Use SSL certificates where possible
+Use SSL certificates where available
 
-🔹 Notes & Limitations
+## 🔹 Notes & Limitations
 
 Authentication is performed in real time against Active Directory
 
@@ -219,7 +225,7 @@ Network latency can affect login time
 
 Requires database-level ACL configuration
 
-🔹 Author Notes
+## 🔹 Author Notes
 
 This implementation provides a lightweight, database-level LDAP authentication solution
 for Oracle APEX environments that require direct Active Directory integration without
